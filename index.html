@@ -1,13 +1,193 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="pt-BR">
 <head>
-  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Merson</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bazar da Moninha | Vitrine Pix</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f9f9f9; }
+        h1, h2 { text-align: center; color: #222; }
+        
+        /* PAINEL DA DONA */
+        .painel-cadastro { 
+            background: #fff; padding: 20px; border-radius: 8px; 
+            max-width: 500px; margin: 0 auto 40px auto; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 2px dashed #000;
+        }
+        .campo { margin-bottom: 15px; }
+        .campo label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .campo input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-cadastrar { width: 100%; background: #000; color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; font-size: 16px; border-radius: 4px; }
+        .btn-cadastrar:hover { background: #333; }
+        
+        /* VITRINE DE PRODUTOS */
+        .vitrine { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .produto-card { background: #fff; padding: 15px; border-radius: 4px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .produto-card img { width: 100%; height: 280px; object-fit: cover; border-radius: 4px; }
+        .produto-card h3 { font-size: 16px; margin: 10px 0 5px 0; color: #333; }
+        .produto-card .preco { font-size: 18px; font-weight: bold; color: #000; margin-bottom: 15px; }
+        
+        /* BOTÃO DE COMPRAR */
+        .btn-comprar { 
+            width: 100%; background: #fa541c; color: #fff; border: none;
+            padding: 12px 0; font-weight: bold; cursor: pointer;
+            text-align: center; border-radius: 4px; font-size: 14px;
+        }
+        .btn-comprar:hover { background: #d4380d; }
+
+        /* JANELA FLUTUANTE (MODAL DO PIX) */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); z-index: 1000;
+        }
+        .modal-conteudo {
+            background-color: #fff; margin: 15% auto; padding: 25px;
+            width: 90%; max-width: 400px; border-radius: 8px; text-align: center;
+            position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .fechar { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; }
+        
+        .chave-pix-box {
+            background: #f0f0f0; padding: 12px; border-radius: 4px;
+            margin: 15px 0; font-weight: bold; font-size: 16px;
+            border: 1px dashed #333; display: flex; justify-content: space-between; align-items: center;
+        }
+        .btn-copiar { background: #000; color: #fff; border: none; padding: 5px 10px; cursor: pointer; font-size: 12px; border-radius: 3px; }
+        
+        .btn-enviar-comprovante {
+            display: block; width: 100%; background: #25D366; color: white;
+            text-decoration: none; padding: 12px 0; font-weight: bold;
+            border-radius: 4px; margin-top: 15px; font-size: 15px;
+        }
+    </style>
 </head>
 <body>
-  <h1 style="font-size: 80px;">Apresento o Emerson</h1>
-  <p style="font-size: 70px;">oi</p>
-  <a href="https://ibb.co/W4wT9YxS"><img src="https://i.ibb.co/v6Gt5Kw2/IMG-20260404-233047.jpg" alt="IMG-20260404-233047" border="0" width="800" height="800"></a>
+
+    <h1>🛍️ BAZAR DA MONINHA</h1>
+    
+    <!-- PAINEL DA DONA -->
+    <section class="painel-cadastro">
+        <h2>⚙️ Painel de Cadastro (Sem links do Mercado Pago)</h2>
+        
+        <div class="campo">
+            <label>Link da Foto da Roupa:</label>
+            <input type="text" id="foto-roupa" placeholder="Cole a URL da imagem...">
+        </div>
+        
+        <div class="campo">
+            <label>Nome da Peça:</label>
+            <input type="text" id="nome-roupa" placeholder="Ex: Cropped Preto Canelado">
+        </div>
+        
+        <div class="campo">
+            <label>Preço (R$):</label>
+            <input type="number" id="preco-roupa" step="0.01" placeholder="Ex: 29.90">
+        </div>
+        
+        <button class="btn-cadastrar" onclick="cadastrarProduto()">Colocar na Vitrine ✨</button>
+    </section>
+
+    <hr style="margin: 40px 0; border: 1px solid #eee;">
+
+    <!-- VITRINE -->
+    <h2>✨ Vitrine do Bazar</h2>
+    <main class="vitrine" id="vitrine-produtos">
+        <!-- As roupas cadastradas aparecem aqui -->
+    </main>
+
+    <!-- JANELA DO PIX (MODAL) -->
+    <div id="modal-pix" class="modal">
+        <div class="modal-conteudo">
+            <span class="fechar" onclick="fecharModal()">&times;</span>
+            <h3 style="margin-top: 0;">Falta pouco! 🎉</h3>
+            <p>Para garantir sua peça, faça o Pix no valor de:</p>
+            <h2 id="modal-valor-total" style="color: #fa541c; margin: 10px 0;">R$ 0,00</h2>
+            
+            <p style="font-size: 14px; color: #666; margin-bottom: 5px;">Chave Pix (Telefone):</p>
+            <div class="chave-pix-box">
+                <span id="chave-celular">31991975289</span>
+                <button class="btn-copiar" onclick="copiarChave()">Copiar</button>
+            </div>
+            
+            <p style="font-size: 12px; color: #666;">Após fazer o pagamento, clique no botão abaixo para enviar o comprovante e combinar a entrega!</p>
+            
+            <a href="#" id="btn-whatsapp-link" target="_blank" class="btn-enviar-comprovante">Enviar Comprovante via Zap 📱</a>
+        </div>
+    </div>
+
+    <script>
+        let roupasNoBazar = [];
+        let itemSendoComprado = {};
+
+        function cadastrarProduto() {
+            const foto = document.getElementById('foto-roupa').value;
+            const nome = document.getElementById('nome-roupa').value;
+            const preco = document.getElementById('preco-roupa').value;
+
+            if (!foto || !nome || !preco) {
+                alert("Por favor, preencha a foto, o nome e o preço da roupa!");
+                return;
+            }
+
+            const novaRoupa = {
+                foto: foto,
+                nome: nome,
+                preco: parseFloat(preco).toFixed(2)
+            };
+
+            roupasNoBazar.push(novaRoupa);
+            mostrarRoupasNaVitrine();
+
+            // Limpa os campos
+            document.getElementById('foto-roupa').value = '';
+            document.getElementById('nome-roupa').value = '';
+            document.getElementById('preco-roupa').value = '';
+        }
+
+        function mostrarRoupasNaVitrine() {
+            const vitrine = document.getElementById('vitrine-produtos');
+            vitrine.innerHTML = '';
+
+            roupasNoBazar.forEach((roupa, index) => {
+                vitrine.innerHTML += `
+                    <div class="produto-card">
+                        <img src="${roupa.foto}" alt="${roupa.nome}">
+                        <h3>${roupa.nome}</h3>
+                        <div class="preco">R$ ${roupa.preco}</div>
+                        <button class="btn-comprar" onclick="abrirPagamentoPix('${roupa.nome}', '${roupa.preco}')">COMPRAR ✨</button>
+                    </div>
+                `;
+            });
+        }
+
+        function abrirPagamentoPix(nome, preco) {
+            itemSendoComprado = { nome, preco };
+            
+            // Atualiza os valores na janelinha
+            document.getElementById('modal-valor-total').innerText = `R$ ${preco}`;
+            
+            // Configura a mensagem automática do WhatsApp
+            const numeroWhatsApp = "5531991975289"; 
+            const mensagem = `Olá Moninha! Acabei de fazer o Pix de R$ ${preco} para comprar a peça: *${nome}*. Aqui está o meu comprovante!`;
+            const urlZap = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+            
+            document.getElementById('btn-whatsapp-link').href = urlZap;
+            
+            // Mostra o modal na tela
+            document.getElementById('modal-pix').style.display = 'block';
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-pix').style.display = 'none';
+        }
+
+        function copiarChave() {
+            const chave = document.getElementById('chave-celular').innerText;
+            navigator.clipboard.writeText(chave).then(() => {
+                alert("Chave Pix copiada com sucesso! Só colar no app do seu banco. 👍");
+            });
+        }
+    </script>
 </body>
 </html>
